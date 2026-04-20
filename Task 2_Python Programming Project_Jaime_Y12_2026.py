@@ -173,8 +173,8 @@ class Location:
                 if product.sku == sku: # Compares products unique identifier for a match with the desired product to be removed.
                     self._products.remove(product) # After a successful comparison the chosen product is deleted through its location.
                     print(f"{sku} has been removed from the location ({self._row}, {self._col})") # Give a message to the user indicating that the "product" refered to by its SKU has been removed in its set location.
-                    return True # Returns "removed".
-            return False # Returns to loop.
+                    return True # Returns successful removed product.
+            return False # Returns to warehouse for message handling.
 
     def update_quantity(self, sku, new_quantity): # Define the function to update product quantity in the warehouse.
         """
@@ -202,8 +202,7 @@ class Location:
                     print(f"{sku} updated to {new_quantity}") # Notify the user that the "product" has been set to new "quantity".
                     return True # Returns new quantity.
                 else:
-                    print("Error! Quantity exceeds location capacity!") # Notify the user quantity goes over the capacity.
-                    return False # Returns to if statement
+                    return False # Returns to if statement.
         return False # Returns to loop.
 
     def update_price(self, sku, new_price): # Define function to update product price using its SKU.
@@ -228,7 +227,6 @@ class Location:
                 print(f"{sku} updated to ${new_price:.2f}") # Notify the user the product's price has been updated.
                 return True # Return for success.
             
-        print("Error! Product not found in location!") # Notify the user there has been an invalid entry.
         return False # Return for failed attempt
         
     
@@ -306,7 +304,7 @@ class Warehouse:
                 location = self._locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns
                 if location and location.remove_product(sku): # Check to see if there's a location and if a product is removed.
                     return True # Return removed product
-        print("Product not found in warehouse!") # Notify the user there isn't any product matching the indentifier in the warehouse system.
+        print(f"Product {sku} not found in any location!") # Notify the user there isn't any product matching the indentifier in the warehouse system.
         return False # Returns false to indicate the product was not found or update in the system.
     
     
@@ -328,7 +326,7 @@ class Warehouse:
                 if location and location.update_quantity(sku, new_quantity): # Check to see if there's a location and if a product's quantity has a new quantity to update y calling its function.
                     return True # Stop loop after finding product.
         
-        print("Product not found") # Notify the user the desired product has not been found in the warehouse system.
+        print(f"Product {sku} not found in any location!") # Notify the user the desired product has not been found in the warehouse system.
         return False # Returns false to indicate the product was not found or update in the system.
     
     def find_and_update_price(self, sku, new_price): # Define function to find and update product's price using its SKU.
@@ -348,7 +346,7 @@ class Warehouse:
                 location = self._locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns.
                 if location and location.update_price(sku, new_price): # Check to see if there's a location and if a product's price has a new quantity to update by calling its function.
                     return True # Returns back successful change.
-        print("Product not found!") # Notify the user the product has not been found in the warehouse.
+        print(f"Product {sku} not found in any location!") # Notify the user the product has not been found in the warehouse.
         return False # Returns to failed message.
     
     def find_product(self, sku): # Define the function to find a product from the list using its unique identifier "SKU".
@@ -785,5 +783,5 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
 
 # Call to run the menu program.
 if __name__ == "__main__":
-    warehouse = setup_warehouse
+    warehouse = setup_warehouse()
     menu(warehouse)
