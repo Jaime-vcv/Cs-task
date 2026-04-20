@@ -2,22 +2,144 @@ import tkinter as tk # It imports tkinter to create the GUI, and it is used as "
 
 # The product class to use for each type of product.
 class Product:
+    """
+    Represents a product in inventory.
+    Demonstrates ENCAPSULATION (private attribtes with getters/setters).
+    """
     def __init__(self, name, sku, price, quantity): #Define the function and parameters, call each parameter by self.
-        self.name = name 
-        self.sku = sku
-        self.price = price
-        self.quantity = quantity
+        """
+        Initialize a new Product.
         
+        Parameters:
+            name (str): Product name
+            sku (str): Stock Keeping Unit (unique identifier)
+            price (float): Product price (must be > 0)
+            quantity (int): Product quantity (must be >= 0)
+        """
+        
+        self._name = name 
+        self._sku = sku
+        self._price = price
+        self._quantity = quantity
+        
+    @property
+    def name(self):
+        """Get product name."""
+        return self._name
+        
+    @property
+    def sku(self):
+        """Get product SKU."""
+        return self._sku
+    
+    @property
+    def price(self):
+        """Get product price."""
+        return self._price
+    
+    @property
+    def quantity(self):
+        """Get product quantity."""
+        return self._quantity
+    
+    @price.setter
+    def price(self, value):
+        """
+        Set price with validation. 
+        
+        Parameters:
+            value (float): New price value.
+            
+        Raises:
+            ValueError: If price is <= 0.
+        """
+        
+        # Bussiness rule: Free of negative prices indicate data entry errors.
+        # This prevents invalid financial transactions in the system.
+        if value <= 0:
+            print("Error! Price must be greater than 0!")
+            raise ValueError("Price must be greater than 0")
+        self._price = value
+    
+    @quantity.setter
+    def quantity(self, value):
+        """
+        Set quantity with validation.
+        
+        Parameters:
+            value (int): New quantity value.
+        
+        Raises:
+            ValueError: If quantity is < 0.
+        """
+        
+        if value <= 0:
+            print("Error! Quantity cannot be negative or 0!")
+            raise ValueError("Quantity cannot be negative or 0")
+        self._quantity = value
+    
+    def __str__(self):
+        """Return string representation of product for display."""
+        return f"{self._name} (SKU: {self._sku}) - ${self._price:.2f} x {self._quantity}"
+    
+    
 # The location class to use for each product location.
 class Location:
+    """
+    Represents a storage location in warehouse.
+    Demonstrates COMPOSITION (holds Product objects).
+    """
     def __init__(self, row, col, capacity): # Define the function and parameters, call each parameter by self and add the product list.
-        self.row = row 
-        self.col = col
-        self.capacity = capacity
-        self.products = [] # Stores all products assigned to this location.
+        """
+        Initialize a new Location.
+        
+        Parameters:
+            row (int): Row coordinate in warehouse grid.
+            col (int): Column coordinate in warehouse grid.
+            capacity (int): Maximum items this location can hold.
+        """
+        
+        self._row = row 
+        self._col = col
+        self._capacity = capacity
+        self._products = [] # Stores all products assigned to this list.
+        
+    @property
+    def row(self):
+        """Get row coodinate."""
+        return self._row
+    
+    @property
+    def col(self):
+        """Get column coodinate."""
+        return self._col
+    
+    @property
+    def capacity(self):
+        """Get location capacity."""
+        return self._capacity
+    
+    @property
+    def products(self):
+        """Return copy of fproducts list to prevent external modification."""
+        return self._products.copy()    
         
     def add_product(self, product): # Define the function to add a product to the list.
-        if self.capacity <= 0: # Check if new capacity its a negative value.
+        """
+        Add a product to this location if capacity allows.
+        
+        Parameters:
+            product (Product): The product to add.
+        
+        Returns:
+            bool: True if added successfully, False if rejected.
+        
+        Raises:
+            None (errors are handled intenally with print statements)
+        
+        """
+        
+        if self._capacity <= 0: # Check if new capacity its a negative value.
             print("Invalid capacity for location")
             return False
         
@@ -25,39 +147,52 @@ class Location:
             print("Error! Product quantity can't be negative!") # Notifies the user that a negative quantity is not allowed in the system.
             return False
             
-        for existing in self.products: # Local variable "existing" is used to match each product.
+        for existing in self._products: # Local variable "existing" is used to match each product.
             if existing.sku == product.sku: # Checks if existing products are found in the system.
-                print(f"Error {product.sku} already exists in ({self.row}, {self.col})") # Notify the user the product already exists in a location.
+                print(f"Error {product.sku} already exists in ({self._row}, {self._col})") # Notify the user the product already exists in a location.
                 return False # Returns to function
             
-        current_items = sum(p.quantity for p in self.products) # Sums the quantity of products to compare to the capacity, storing the quantity in a local variable.
+        current_items = sum(p.quantity for p in self._products) # Sums the quantity of products to compare to the capacity, storing the quantity in a local variable.
         
-        if current_items + product.quantity <= self.capacity: # Checks whether there's enoguh space by summing the total amount and comparing it to the capacity.
-            self.products.append(product) # If check is successful the new product will be eppended/added to the list of products therefore included in the system.
+        if current_items + product.quantity <= self._capacity: # Checks whether there's enoguh space by summing the total amount and comparing it to the capacity.
+            self._products.append(product) # Composition: Location maintains full control over its products
+            # Products are stored internally to enforce capacity limits
             return True # Returns added product.
         else:
-            print(f"Location ({self.row}, {self.col}) is full") # Prints the location of where the product would have been and declares the space to be full.
+            print(f"Location ({self._row}, {self._col}) is full") # Prints the location of where the product would have been and declares the space to be full.
             return False # Returns to function.
 
     def remove_product(self, sku): # Define the function to remove a product from the list using its unique identifier "SKU" (Stock Keeping Unit).
-            for product in self.products: # Iterate using "product" as a local variable troughout 'location(products)'.
+            """Remove product by SKU. """
+            for product in self._products: # Iterate using "product" as a local variable troughout 'location(products)'.
                 if product.sku == sku: # Compares products unique identifier for a match with the desired product to be removed.
-                    self.products.remove(product) # After a successful comparison the chosen product is deleted through its location.
-                    print(f"{sku} has been removed from the location ({self.row}, {self.col})") # Give a message to the user indicating that the "product" refered to by its SKU has been removed in its set location.
+                    self._products.remove(product) # After a successful comparison the chosen product is deleted through its location.
+                    print(f"{sku} has been removed from the location ({self._row}, {self._col})") # Give a message to the user indicating that the "product" refered to by its SKU has been removed in its set location.
                     return True # Returns "removed".
             return False # Returns to loop.
 
     def update_quantity(self, sku, new_quantity): # Define the function to update product quantity in the warehouse.
+        """
+        Update product quantity of existing product.
+        
+        Parameters:
+            sku (str): Stock Keeping Unit of product.
+            new_quantity (int): New quantity value.
+        
+        Returns:
+            bool: True if updated, False if not found or invalid.
+        """
+        
         if new_quantity < 0: # If new quantity is less than 0, the quantity won't be accepted since a negative quantity is not possible.
             print("Error! New quantity can't be negative!") # Notify the use a negative quantity is not allowed in the system.
             return False # Returns failure.
             
-        for product in self.products: # Iterate through every product.
+        for product in self._products: # Iterate through every product.
             if product.sku == sku: # Check if the product unique identifier matches the desired product.
-                current_total = sum(p.quantity for p in self.products) # Get a total by adding up the quantity of the products.
+                current_total = sum(p.quantity for p in self._products) # Get a total by adding up the quantity of the products.
                 new_total = current_total - product.quantity + new_quantity # The new total quantity will be the "total" - the product "quantity" + "new quantity".
                 
-                if new_total <= self.capacity: # Check if new total is less than the capacity.
+                if new_total <= self._capacity: # Check if new total is less than the capacity.
                     product.quantity = new_quantity # Set current product quantity to new quantity.
                     print(f"{sku} updated to {new_quantity}") # Notify the user that the "product" has been set to new "quantity".
                     return True # Returns new quantity.
@@ -67,14 +202,25 @@ class Location:
         return False # Returns to loop.
 
     def update_price(self, sku, new_price): # Define function to update product price using its SKU.
+        """
+        Update product price of existing product.
+        
+        Parameters:
+            sku (str): Stock Keeping Unit of product.
+            new_price (float): New price value.
+        
+        Returns:
+            bool: True if updated, False if not found or invalid
+        """
+        
         if new_price <= 0: # Check if price is negative or 0 as both cases are not allowed in the system.
             print("Error! Price can't be negative or free!") # Notify the user if any of the two cases has been encountered.
             return False # Returns for a failed input.
         
-        for product in self.products: # Iterate through every product.
+        for product in self._products: # Iterate through every product.
             if product.sku == sku: # Check if given SKU matches product SKU.
                 product.price = new_price # Set product "price" to be "new price". 
-                print(f"{sku} updated to {new_price}") # Notify the user the product's price has been updated.
+                print(f"{sku} updated to ${new_price:.2f}") # Notify the user the product's price has been updated.
                 return True # Return for success.
             
         print("Error! Product not found in location!") # Notify the user there has been an invalid entry.
@@ -82,20 +228,73 @@ class Location:
         
     
     def get_total_quantity(self): # Define the function to get total product quantity in the warehouse by going through each product.
-        return sum(p.quantity for p in self.products) # Sum of all products to get a total amount of products.
+        """Get total items in location. """
+        return sum(p.quantity for p in self._products) # Sum of all products to get a total amount of products.
 
 
 # The Warehouse class used for locations.
 class Warehouse:
+    """
+    Manages 2D grid of locations.
+    Demonstrates AGGREGATION (collection of Location objects). 
+    """
     def __init__(self, rows, cols): # Define the function and parameters, call each parameter by self.
-        self.rows = rows
-        self.cols = cols
-        self.locations = [[None for _ in range(cols)] for _ in range(rows)] # Allows the 2D array to exist and start functionality in warehouse by iterating rows and columns.
+        """
+        Initialize a new Warehouse with 2D grid.
+        
+        Parameters:
+            rows (int): Number of rows in grid.
+            cols (int): Number of columns in grid.
+        """
+        
+        self._rows = rows
+        self._cols = cols
+        self._locations = [[None for _ in range(cols)] for _ in range(rows)] # Allows the 2D array to exist and start functionality in warehouse by iterating rows and columns.
 
+    @property
+    def rows(self):
+        """Get warehouse rows. """
+        return self._rows
+    
+    @property
+    def cols(self):
+        """Get warehouse columns. """
+        return self._cols
+
+    @property
+    def locations(self):
+        """Get warehouse locations grid. """
+        return self._locations
+    
+    def valid_position(self, row, col): # Define function to validate a position.
+        """
+        Check if coordinates are within warehouse bounds.
+        
+        Parameters:
+            row (int): Row coordinate to check.
+            col (int): column coordinate to check.
+            
+        Returns:
+            bool: True if valid, False if out of bounds.
+        """
+        
+        return 0 <= row < self._rows and 0 <= col < self._cols # Check if coordinates are within warehouse bounds.
+
+    
     def find_and_remove_product(self, sku): # Define the function to find and remove a product from the list using its unique identifier "SKU" and location.
-        for r in range(self.rows): # Iterate through every "r"ow and "c"olumn to access all products.
-            for c in range(self.cols):
-                location = self.locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns
+        """
+        Search entire warehouse and remove product by SKU.
+        
+        Parameters:
+            sku (str): Stock Keeping Unit of product to remove.
+            
+        Returns:
+            bool: True if found and removed, False if not found.
+        """
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns
                 if location and location.remove_product(sku): # Check to see if there's a location and if a product is removed.
                     return True # Return removed product
         print("Product not found in warehouse!") # Notify the user there isn't any product matching the indentifier in the warehouse system.
@@ -103,9 +302,20 @@ class Warehouse:
     
     
     def find_and_update_quantity(self, sku, new_quantity): # Define the function to find and update a product quantity from the list using its unique identifier "SKU".
-        for r in range(self.rows): # Iterate through every "r"ow and "c"olumn to access all products.
-            for c in range(self.cols):
-                location = self.locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns.
+        """
+        Search warehouse and update product quantity.
+        
+        Parameters:
+            sku (str): Storage Keeping Unit of product.
+            new_quantity (int): New quantity value.
+        
+        Returns:
+            bool: true if updated, False if not found or invalid.
+        """
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns.
                 if location and location.update_quantity(sku, new_quantity): # Check to see if there's a location and if a product's quantity has a new quantity to update y calling its function.
                     return True # Stop loop after finding product.
         
@@ -113,18 +323,39 @@ class Warehouse:
         return False # Returns false to indicate the product was not found or update in the system.
     
     def find_and_update_price(self, sku, new_price): # Define function to find and update product's price using its SKU.
-        for r in range(self.rows): # Iterate through every "r"ow and "c"olumn to access all products.
-            for c in range(self.cols):
-                location = self.locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns.
+        """
+        Search warehouse and update product price.
+        
+        Parameters:
+            sku (str): Storage Keeping Unit of product.
+            new_price (float): New price value.
+            
+        Returns:
+            bool: True if updated, False if not found or invalid.
+        """
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c] # Give out the location using the values from the iterated "r"ows and "c"olumns.
                 if location and location.update_price(sku, new_price): # Check to see if there's a location and if a product's price has a new quantity to update by calling its function.
                     return True # Returns back successful change.
         print("Product not found!") # Notify the user the product has not been found in the warehouse.
         return False # Returns to failed message.
     
     def find_product(self, sku): # Define the function to find a product from the list using its unique identifier "SKU".
-        for r in range(self.rows): # Iterate through every "r"ow and "c"olumn to access all products.
-            for c in range(self.cols):
-                location = self.locations[r][c]
+        """
+        Find product across all warehouse locations.
+        
+        Parameters:
+            sku (str): Storage Keeping Unit to search for product.
+        
+        Returns:
+            Product: The found product object, or None if not found.
+        """
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c]
                 if location: # Check to pass location.
                     for product in location.products: # Iterate through every product in each location.
                         if product.sku == sku: # Check given "SKU" to match product in warehouse.
@@ -134,26 +365,48 @@ class Warehouse:
         return None # Return nothing to user, indicating failure in finding the product.
     
     def add_location(self, row, col, capacity): # Define function to add location with rows, columns and capacity.
+        """
+        Add new location to warehouse grid.
+        
+        Parameters:
+            col (str): Column coordinate.
+            capacity (int): Maximum capacity for location.
+            
+        Return:
+            bool: True if created, Flase if invalid or exists.
+        """
+        
         if not self.valid_position(row, col): # Check if coordinates are not valid.
             print("Invalid coordinates!") # Notify the user of invalid coordinates.
             return False # Return invalid coordinates.
         
-        if self.locations[row][col] is not None: # Check if a location is not empty. 
+        if self._locations[row][col] is not None: # Check if a location is not empty. 
             print("Location already exists!") # Notify the user the location exists. Therefore, a new location can't be added.
             return False # Return failed attempt
 
-        self.locations[row][col] = Location(row, col, capacity) # Assign location and values by calling Location class.
+        self._locations[row][col] = Location(row, col, capacity) # Assign location and values by calling Location class.
         
         print(f"Location ({row}, {col}) created with capacity {capacity}") #Notify the user of the success and with coordinates and capacity.
         return True # Return success.
     
     def remove_location(self, row, col): # Define function to remove location using coordinates.
+        """
+        Remove location from warehouse if empty.
+        
+        Parameters:
+            row (str): Row coordinate.
+            col (str): Column coordinate.
+            
+        Return:
+            bool: True if removed, False if invalid or not empty.
+        """
+        
         if not self.valid_position(row, col): # Check if coordinates are not valid.
             print("Invalid coordinates!") # Notify the user of invalid coordinates.
             return False # Return invalid coordinates
-        self.locations[row][col] # Check if a location is not empty.
+        self._locations[row][col] # Check if a location is not empty.
         
-        location = self.locations[row][col] # Call location with coordinates using "self".
+        location = self._locations[row][col] # Call location with coordinates using "self".
         
         if location is None: # Check if location exists.
             print("Location does not exist!") # Notify the user location does not exist.
@@ -163,15 +416,13 @@ class Warehouse:
             print("Cannot remove location, location not empty!") # Notify the user the location contains products, therefore it cannot be removed.
             return False # Return failure.
         
-        self.locations[row][col] = None # Set given location to "None" therefore removing it from the warehouse.
+        self._locations[row][col] = None # Set given location to "None" therefore removing it from the warehouse.
         print(f"Location ({row}, {col}) removed") # Notify the user the location (given its coordinates) has been deleted.
         return True # Return success.
     
-    def valid_position(self, row, col): # Define function to validate a position.
-        return 0 <= row < self.rows and 0 <= col < self.cols # Check if coordinates are within warehouse bounds.
-
         
     def print_warehouse(self): # Define function to print warehouse layout as 2D Array for user understanding.
+        """Text-based 2D array dsiplay."""
         print("\n --- Warehouse Layout ---") # Display name for user friendly experience.
         
         cell_width = 12 # Width of each cell
@@ -181,11 +432,11 @@ class Warehouse:
             header += f"{c:^{cell_width}}" # Take the column number place it centered inside using "^" and give it a width of "cell width".
         print(header) # Display header.
         
-        for r in range(self.rows): # A loop that goes through all "r"ows.
+        for r in range(self._rows): # A loop that goes through all "r"ows.
             row_display = [] # Display rows in a list
             
-            for c in range(self.cols): # A loop that goes through all "c"olumns
-                location = self.locations[r][c] # Call location with coordinates using "self".
+            for c in range(self._cols): # A loop that goes through all "c"olumns
+                location = self._locations[r][c] # Call location with coordinates using "self".
                 
                 if location: # Check for location
                     total_qty = sum(p.quantity for p in location.products) # Get total quantity of products using a loop.
@@ -267,6 +518,16 @@ warehouse.locations[4][2] = location9
 
 # Create Tkinter GUI ("Graphical User Interface") so the user has access to the 2D Array.
 def display_warehouse(): # Define the displaying function for the warehouse.
+    """
+    Create and display the Tkinter GUI for warehouse visualization.
+    
+    Parameters:
+        warehouse (Warehouse): The warehouse object to display.
+        
+    Note:
+        This functions blocks until the GUI window is closed!.
+    """
+    
     window = tk.Tk() # Open the window/interface using Tkinter.
     window.title("Inventory Management system") #Assign a name to the window for user friendly usage.
     
@@ -314,6 +575,26 @@ def display_warehouse(): # Define the displaying function for the warehouse.
     
     
 def menu(): # Define function to be a menu for users to view and manipulate the warehouse.
+    """
+    Command Line Interface for the Inevntory Management System.
+    
+    Provides a text_based menu allowing users to:
+    - View warehouse GUI (Option 1)
+    - Add/remove/update products (Options 2-5)
+    - Search for products (Option 6)
+    - Add/remove locations (Option 7-8)
+    - Print warehouse layout (Options 9)
+    - Exit the syetem (Option 10)
+    
+    Paramaters:
+        warehouse (Warehouse): The warehouse object to manage
+    Returns:
+        None
+    
+    Note:
+        Uses infinite loop until user selects exit (Option 10).
+        Input validation prevents crashes from invalid data types
+    """
     while True: # Keeps an infinite loop until a break or stop happens.
         print("\n --- Inventory Management System ---") # Display in a new line the name of the system: "Inventory Management System".
         print("1. Display Warehouse!") # Display a message to the user indicating which number to input to view the warehouse.
