@@ -58,7 +58,7 @@ class Product:
         # This prevents invalid financial transactions in the system.
         if value <= 0:
             print("Error! Price must be greater than 0!")
-            raise ValueError("Price must be greater than 0")
+            raise WarehouseError("Price must be greater than 0")
         self._price = value
     
     @quantity.setter
@@ -75,9 +75,9 @@ class Product:
         
         if value <= 0:
             print("Error! Quantity cannot be negative or 0!")
-            raise ValueError("Quantity cannot be negative or 0")
+            raise WarehouseError("Quantity cannot be negative or 0")
         self._quantity = value
-    
+
     def __str__(self):
         """Return string representation of product for display."""
         return f"{self._name} (SKU: {self._sku}) - ${self._price:.2f} x {self._quantity}"
@@ -123,6 +123,11 @@ class Location:
     def products(self):
         """Return copy of fproducts list to prevent external modification."""
         return self._products.copy()    
+    
+    def __str__(self):
+        """POLYMORPHISM: Same method as Product different behaviour."""
+        items = len(self._products)
+        return f"Location ({self._row},{self._col}) - {items} items stored."
         
     def add_product(self, product): # Define the function to add a product to the list.
         """
@@ -231,6 +236,10 @@ class Location:
         """Get total items in location. """
         return sum(p.quantity for p in self._products) # Sum of all products to get a total amount of products.
 
+class WarehouseError(Exception):
+    """Custom execption for warehouse operations.
+    Demonstrates INHERITANCE (inherits from Execption)."""
+    pass
 
 # The Warehouse class used for locations.
 class Warehouse:
@@ -404,7 +413,6 @@ class Warehouse:
         if not self.valid_position(row, col): # Check if coordinates are not valid.
             print("Invalid coordinates!") # Notify the user of invalid coordinates.
             return False # Return invalid coordinates
-        self._locations[row][col] # Check if a location is not empty.
         
         location = self._locations[row][col] # Call location with coordinates using "self".
         
@@ -522,7 +530,7 @@ def display_warehouse(): # Define the displaying function for the warehouse.
     Create and display the Tkinter GUI for warehouse visualization.
     
     Parameters:
-        warehouse (Warehouse): The warehouse object to display.
+        warehouse (Warehouse): The warehouse object to display, Using warehouse as global variable.
         
     Note:
         This functions blocks until the GUI window is closed!.
@@ -639,7 +647,7 @@ def menu(): # Define function to be a menu for users to view and manipulate the 
                     print("Product added to warehouse!") # Notify the user product has been added successfully.
                 else:
                     print("Product not added to warehouse...") # If prevoius check fails, notify the user on failure.
-            except ValueError:
+            except WarehouseError:
                 print("Invalid entry! \/ (Try again)") # If there's any errors notify the user of invalid entry and encourage to try again for user friendly experience.
                             
         elif choice == "3": # User chooses to input SKU to remove a product.
@@ -651,7 +659,7 @@ def menu(): # Define function to be a menu for users to view and manipulate the 
             try: # Handles user input conversion and prevents errors caused by invalid input in new quantity.
                 new_qty = int(input("Enter new product quantity: ")) # User inputs new quantity.
                 warehouse.find_and_update_quantity(sku, new_qty) # Call function to find and update product quantity.
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                  print("!Invalid entry! 'Only numbers within the system are allowed'") # User gets notified that there has been an error with their number input.
         
         elif choice == "5": # User chooses to update a product's price using its SKU.
@@ -659,7 +667,7 @@ def menu(): # Define function to be a menu for users to view and manipulate the 
             try: # Handles user input conversion and prevents errors caused by invalid input in new price.
                 price = float(input("New Price: ")) # User inputs new price.
                 warehouse.find_and_update_price(sku, price) # Call function to find and update product's price using the SKU.
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input!") # Notify the user of an invalid input.
                 
         elif choice == "6": # User chooses to find a product using its SKU.
@@ -675,7 +683,7 @@ def menu(): # Define function to be a menu for users to view and manipulate the 
                     warehouse.add_location(row, col, capacity) # Call function to assign location with capacity and validated coordinates.
                 else:
                     print("Invalid Row/Column index!") # Notify the user of invalid coordinates
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input") # Notify the user of invalid input.
         
         elif choice == "8": # User chooses to remove a location.
@@ -686,13 +694,14 @@ def menu(): # Define function to be a menu for users to view and manipulate the 
                     warehouse.remove_location(row, col) # Call function to remove location using validated coordinates.
                 else:
                     print("Invalid Row/Column index!") # Notify the user of invalid coordinates
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input")
         
         elif choice == "9": # User chooses to print the warehouse
             if warehouse is None:
                 print("Warehouse could not be started")
-            warehouse.print_warehouse() # Calls function to print warehouse layout.
+            else:
+                warehouse.print_warehouse() # Calls function to print warehouse layout.
                     
         elif choice == "10": # User chooses to exit the warehouse after viewing and/or manipulating it.
             print("Closing warehouse!") # Notifies the user the warehouse is being closed.
