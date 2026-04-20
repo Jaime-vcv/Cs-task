@@ -1,10 +1,15 @@
 import tkinter as tk # It imports tkinter to create the GUI, and it is used as "tk" to facilitate usage.
 
+class WarehouseError(Exception):
+    """Custom execption for warehouse operations.
+    Demonstrates INHERITANCE (inherits from Exception)."""
+    pass
+
 # The product class to use for each type of product.
 class Product:
     """
     Represents a product in inventory.
-    Demonstrates ENCAPSULATION (private attribtes with getters/setters).
+    Demonstrates ENCAPSULATION (private attributes with getters/setters).
     """
     def __init__(self, name, sku, price, quantity): #Define the function and parameters, call each parameter by self.
         """
@@ -16,6 +21,11 @@ class Product:
             price (float): Product price (must be > 0)
             quantity (int): Product quantity (must be >= 0)
         """
+        if price <= 0: # Validation price check.
+            raise WarehouseError("Price must be greater than 0!")
+        
+        if quantity <= 0: # Validation quantity check.
+            raise WarehouseError("Quantity must be greater than 0!")
         
         self._name = name 
         self._sku = sku
@@ -55,7 +65,7 @@ class Product:
             ValueError: If price is <= 0.
         """
         
-        # Bussiness rule: Free of negative prices indicate data entry errors.
+        # Business rule: Free of negative prices indicate data entry errors.
         # This prevents invalid financial transactions in the system.
         if value <= 0:
             print("Error! Price must be greater than 0!")
@@ -107,12 +117,12 @@ class Location:
         
     @property
     def row(self):
-        """Get row coodinate."""
+        """Get row coordinate."""
         return self._row
     
     @property
     def col(self):
-        """Get column coodinate."""
+        """Get column coordinate."""
         return self._col
     
     @property
@@ -122,7 +132,7 @@ class Location:
     
     @property
     def products(self):
-        """Return copy of fproducts list to prevent external modification."""
+        """Return copy of products list to prevent external modification."""
         return self._products.copy()    
     
     def __str__(self):
@@ -141,7 +151,7 @@ class Location:
             bool: True if added successfully, False if rejected.
         
         Raises:
-            None (errors are handled intenally with print statements)
+            None (errors are handled internally with print statements)
         
         """
         
@@ -160,7 +170,7 @@ class Location:
         # LOGIC: Calculate total quantity to check against capacity    
         current_items = sum(p.quantity for p in self._products) # Sums the quantity of products to compare to the capacity, storing the quantity in a local variable.
         
-        if current_items + product.quantity <= self._capacity: # Checks whether there's enoguh space by summing the total amount and comparing it to the capacity.
+        if current_items + product.quantity <= self._capacity: # Checks whether there's enough space by summing the total amount and comparing it to the capacity.
             self._products.append(product) # Composition: Location maintains full control over its products
             # Products are stored internally to enforce capacity limits
             return True # Returns added product.
@@ -170,7 +180,7 @@ class Location:
 
     def remove_product(self, sku): # Define the function to remove a product from the list using its unique identifier "SKU" (Stock Keeping Unit).
             """Remove product by SKU. """
-            for product in self._products: # Iterate using "product" as a local variable troughout 'location(products)'.
+            for product in self._products: # Iterate using "product" as a local variable throughout 'location(products)'.
                 if product.sku == sku: # Compares products unique identifier for a match with the desired product to be removed.
                     self._products.remove(product) # After a successful comparison the chosen product is deleted through its location.
                     print(f"{sku} has been removed from the location ({self._row}, {self._col})") # Give a message to the user indicating that the "product" refered to by its SKU has been removed in its set location.
@@ -207,6 +217,10 @@ class Location:
         return False # Returns to loop.
 
     def update_price(self, sku, new_price): # Define function to update product price using its SKU.
+        # FIXED: Removed "Porduct not found in Location print from here"
+        # Warehouse.find_and_update_price() now handles the single
+        # "not found" message after searching all Locations, preventing
+        # duplicate error spam (One duplicate per empty Location in warehouse)
         """
         Update product price of existing product.
         
@@ -235,10 +249,6 @@ class Location:
         """Get total items in location. """
         return sum(p.quantity for p in self._products) # Sum of all products to get a total amount of products.
 
-class WarehouseError(Exception):
-    """Custom execption for warehouse operations.
-    Demonstrates INHERITANCE (inherits from Execption)."""
-    pass
 
 # The Warehouse class used for locations.
 class Warehouse:
@@ -381,7 +391,7 @@ class Warehouse:
             capacity (int): Maximum capacity for location.
             
         Return:
-            bool: True if created, Flase if invalid or exists.
+            bool: True if created, False if invalid or exists.
         """
         
         if not self.valid_position(row, col): # Check if coordinates are not valid.
@@ -429,7 +439,7 @@ class Warehouse:
     
         
     def print_warehouse(self): # Define function to print warehouse layout as 2D Array for user understanding.
-        """Text-based 2D array dsiplay."""
+        """Text-based 2D array display."""
         print("\n --- Warehouse Layout ---") # Display name for user friendly experience.
         
         cell_width = 12 # Width of each cell
@@ -481,6 +491,13 @@ def setup_warehouse():
 
 
     locations_data = [ # Give each location a row a column a maximum capacity and its corresponding product.
+                      
+            # FIXED: Capacity changed from 5 to 200 becasue original capacity
+            
+            # was smaller than product quantities (50, 30, 100), causing
+            
+            # add_product() to silently return False with no items added.
+            
      (0, 0, 200, [0, 1]), # Widget, Gizmos
 
      (1, 1, 200, [2, 3]), # Thingamajig, Doohickey
@@ -502,9 +519,9 @@ def setup_warehouse():
  ]
 
 
-    for row, col, capacity, product_indicies in locations_data:
+    for row, col, capacity, product_indices in locations_data:
         warehouse.add_location(row, col, capacity)
-        for idx in product_indicies:
+        for idx in product_indices:
             warehouse.locations[row][col].add_product(products[idx])
     return warehouse
 
@@ -661,7 +678,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
     - Run unit tests (Option 10)
     - Exit the syetem (Option 11)
     
-    Paramaters:
+    Parameters:
         warehouse (Warehouse): The warehouse object to manage.
     Returns:
         None
@@ -684,7 +701,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         print("10. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
         print("11. Exit!") # Display a message to the user indicating which number to input to exit the system.
             
-        choice = input("Please enter choice: ").strip() # Local varaiable "choice" used to determine what the user desires to do in the "IMS".
+        choice = input("Please enter choice: ").strip() # Local variable "choice" used to determine what the user desires to do in the "IMS".
             
         if choice == "1": # User chooses to view the warehouse.
             display_warehouse(warehouse) # Call to the "GUI".
@@ -714,7 +731,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                 if location.add_product(product): # Check if product has been added successfully to location.
                     print("Product added to warehouse!") # Notify the user product has been added successfully.
                 else:
-                    print("Product not added to warehouse...") # If prevoius check fails, notify the user on failure.
+                    print("Product not added to warehouse...") # If previous check fails, notify the user on failure.
             except ValueError:
                 print("Invalid entry! \/ (Try again)") # If there's any errors notify the user of invalid entry and encourage to try again for user friendly experience.
                             
@@ -732,7 +749,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         
         elif choice == "5": # User chooses to update a product's price using its SKU.
             sku = input("Enter SKU to update price: ") # User inputs product's SKU.
-            # EXECPTION HANDLING: Try-except catches non-integer
+            # EXCEPTION HANDLING: Try-except catches non-integer
             try: # Handles user input conversion and prevents errors caused by invalid input in new price.
                 price = float(input("New Price: ")) # User inputs new price.
                 warehouse.find_and_update_price(sku, price) # Call function to find and update product's price using the SKU.
@@ -763,7 +780,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                     warehouse.remove_location(row, col) # Call function to remove location using validated coordinates.
                 else:
                     print("Invalid Row/Column index!") # Notify the user of invalid coordinates
-            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input")
         
         elif choice == "9": # User chooses to print the warehouse
@@ -777,7 +794,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                     
         elif choice == "11": # User chooses to exit the warehouse after viewing and/or manipulating it.
             print("Closing warehouse!") # Notifies the user the warehouse is being closed.
-            break # Stop the ungoing loop of "while true"
+            break # Stop the ongoing loop of "while true"
             
         else:
             print("Invalid input!! Choose between 1 to 11!") # Notify the user their entry is invalid and must choose from 1 - 5, ensuring a user friendly experience.
@@ -785,5 +802,9 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
 
 # Call to run the menu program.
 if __name__ == "__main__":
+    #FIXED: Originallt wrote!! 'warehouse = setup_warehouse' (missing parentheses)
+    # which assigned the function object instead of calling it, causing:
+    # AttributeError: 'function' object has not attribute 'rows'
+    # This error happened twice, now I make sure to type in my parentheses.
     warehouse = setup_warehouse()
     menu(warehouse)
