@@ -460,77 +460,146 @@ class Warehouse:
             print(row_line) # Display 2D Array as table.
         
 
-# Test Data:
-# Test Products.
-product1 = Product(name= "Widget", sku="WDG001", price=10.99, quantity=50) # Indicate product number, name,unique identifier, price and, quantity. 
-product2 = Product(name="Gizmo", sku="GZM002", price=19.99, quantity=30) 
-product3 = Product(name="Thingamajig", sku="THM003", price=5.99, quantity=100) 
-product4 = Product(name= "Doohickey", sku="DHI004", price=15.99, quantity=20) 
-product5 = Product (name="Gadget", sku="GDT005", price=8.99, quantity=25) 
-product6 = Product (name="Contraption", sku="CNT006", price=12.99, quantity=15) 
-product7 = Product (name="Apparatus", sku="APT007", price=6.99, quantity=40) 
-product8 = Product (name= "Tool", sku="TL008", price=9.99, quantity=35) 
-product9 = Product (name="Accessory", sku="ACC009", price=14.99, quantity=10) 
-product10 = Product(name="Implement", sku="IMP010", price=7.99, quantity=45) 
-product11 = Product(name="Utensil", sku="UTL011", price=11.99, quantity=20) 
-product12 = Product (name="Device", sku="DEV012", price=16.99, quantity=30) 
-product13 = Product(name="Equipment", sku="EQT013", price=18.99, quantity=25) 
-product14 = Product(name="Fixture", sku="FIX014", price=22.99, quantity=5)
+def setup_warehouse():
+    warehouse = Warehouse(5, 5)
+
+    products = [
+        Product(name= "Widget", sku="WDG001", price=10.99, quantity=50), # Indicate product number, name,unique identifier, price and, quantity. 
+        Product(name="Gizmo", sku="GZM002", price=19.99, quantity=30), 
+        Product(name="Thingamajig", sku="THM003", price=5.99, quantity=100), 
+        Product(name= "Doohickey", sku="DHI004", price=15.99, quantity=20), 
+        Product(name="Gadget", sku="GDT005", price=8.99, quantity=25), 
+        Product(name="Contraption", sku="CNT006", price=12.99, quantity=15), 
+        Product(name="Apparatus", sku="APT007", price=6.99, quantity=40), 
+        Product(name= "Tool", sku="TL008", price=9.99, quantity=35), 
+        Product(name="Accessory", sku="ACC009", price=14.99, quantity=10), 
+        Product(name="Implement", sku="IMP010", price=7.99, quantity=45), 
+        Product(name="Utensil", sku="UTL011", price=11.99, quantity=20), 
+        Product(name="Device", sku="DEV012", price=16.99, quantity=30), 
+        Product(name="Equipment", sku="EQT013", price=18.99, quantity=25), 
+        Product(name="Fixture", sku="FIX014", price=22.99, quantity=5)
+    ]
 
 
-# Test Locations.
-location1 = Location(0, 0, 200) # Give each location a number, a row and column and a maximum capacity.
-location1.add_product(product1) # Give each numbered location 2 or 1 product.
-location1.add_product(product2)
+    locations_data = [ # Give each location a row a column a maximum capacity and its corresponding product.
+     (0, 0, 200, [0, 1]), # Widget, Gizmos
 
-location2 = Location(1, 1, 200)
-location2.add_product(product3)
-location2.add_product(product4)
+     (1, 1, 200, [2, 3]), # Thingamajig, Doohickey
 
-location3 = Location(2, 2, 200)
-location3.add_product(product5)
-location3.add_product(product6)
+     (2, 2, 200, [4, 5]), # Gadget, Contraption
 
-location4 = Location(3, 3, 200)
-location4.add_product(product7)
-location4.add_product(product8)
+     (3, 3, 200, [6, 7]), # Apparatus, Tool
 
-location5 = Location(4, 4, 200)
-location5.add_product(product9)
-location5.add_product(product10)
+     (4, 4, 200, [8, 9]), # Accessory, Implement
 
-location6 = Location(2, 4, 200)
-location6.add_product(product11)
+     (2, 4, 200, [10]), # Utensil
 
-location7 = Location(3, 1, 200)
-location7.add_product(product12)
+     (3, 1, 200, [11]), # Device
 
-location8 = Location(1, 4, 200)
-location8.add_product(product13)
+     (1, 4, 200, [12]), # Equipment
 
-location9 = Location(4, 2, 200)
-location9.add_product(product14)
+     (4, 2, 200, [13]) # Fixture
+     
+ ]
 
 
-# Test Warehouse locations.
-warehouse = Warehouse(5, 5) # The parameters indicate a warehouse/array of 5x5.
-warehouse.locations[0][0] = location1 # Use numbered locations to be put on their respective row and column inside the warehouse.
-warehouse.locations[1][1] = location2
-warehouse.locations[2][2] = location3
-warehouse.locations[3][3] = location4
-warehouse.locations[4][4] = location5
-warehouse.locations[2][4] = location6
-warehouse.locations[3][1] = location7
-warehouse.locations[1][4] = location8
-warehouse.locations[4][2] = location9
+    for row, col, capacity, product_indicies in locations_data:
+        warehouse.add_location(row, col, capacity)
+        for idx in product_indicies:
+            warehouse.locations[row][col].add_product(products[idx])
+    return warehouse
+
+
+def run_unit_tests():
+    """
+    Unit testing for core functionality.
+    Demonstrates validations of critical methods.
+    
+    Returns:
+        bool: True if all tests  pass, False otherwise.
+    """
+    print("\n=== RUNNING UNIT TESTS ===")
+    all_passed = True
+    
+    # Test 1: Product creation and validation.
+    try:
+        p = Product("Test", "TST001", 10.0, 5)
+        assert p.name == "Test"
+        assert p.sku == "TST001"
+        print("Pass: Product creation and getters")
+    except Exception as e:
+        print(f"Fail: Product creation - {e}")
+        all_passed = False
+        
+    
+    # Test 2: Price validation (exception handling)
+    try:
+        p = Product("Test2", "TST002", 10.0, 5)
+        p.price = -5
+        print("Fail: Price validation should have raised exception")
+        all_passed = False
+    except WarehouseError:
+        print ("PASS: Price validation rejects negative values")
+    except Exception as e:
+        print(f"FAIL: Price validation wrong exception - {e}")
+        all_passed = False
+    
+    
+    # Test 3: Location capacity enforcement
+    try:
+       loc = Location(0, 0, 100)
+       p1 = Product("A", "A001", 5.0, 60)
+       p2 = Product("B", "B002", 5.0, 50)
+       result1 = loc.add_product(p1)
+       result2 = loc.add_product(p2)
+       assert result1 == True, "Should add first product!"
+       assert result2 == False, "Should reject second product since (60+50 > 100)"
+       print("PASS: Location capacity enforcement")
+    except Exception as e:
+        print(f"FAIL: Location capacity - {e}")
+        all_passed = False
+        
+    
+    # Test 4: Valid position checking
+    try:
+        wh = Warehouse(5, 5)
+        assert wh.valid_position(0, 0) == True
+        assert wh.valid_position(4, 4) == True
+        assert wh.valid_position(5, 5) == False
+        assert wh.valid_position(-1, 0) == False
+        print("PASS: Position validation")
+    except Exception as e:
+        print(f"FAIL: Position validation - {e}")
+        all_passed = False
+        
+    
+    # Test 5: Duplicate SKU prevention
+    try:
+        loc = Location(0, 0, 200)
+        p1 = Product("Item", "SAME001", 10.0, 5)
+        p2 = Product("Item2", "SAME001", 15.0, 10)
+        loc.add_product(p1)
+        result = loc.add_product(p2)
+        assert result == False, "Should reject duplicate SKU"
+        print("PASS: Duplicate SKU prevention")
+    except Exception as e:
+        print(f"FAIL: Duplicate SKU - {e}")
+        all_passed = False
+    
+    if all_passed:
+        print("=== ALL TESTS PASSED! ===")
+    else:
+        print("=== SOME TESTS FAILED ===")
+    
+    return all_passed
 
 # Create Tkinter GUI ("Graphical User Interface") so the user has access to the 2D Array.
-def display_warehouse(): # Define the displaying function for the warehouse.
+def display_warehouse(warehouse): # Define the displaying function for the warehouse.
     """
     Create and display the Tkinter GUI for warehouse visualization.
     
     Parameters:
-        warehouse (Warehouse): The warehouse object to display, Using warehouse as global variable.
+        warehouse (Warehouse): The warehouse object to display.
         
     Note:
         This functions blocks until the GUI window is closed!.
@@ -558,8 +627,6 @@ def display_warehouse(): # Define the displaying function for the warehouse.
                 text = "\n".join(names[:4]) if names else "Empty"# Show and limit names to only 4 and give each name its own line.
             
                 total_qty = sum(p.quantity for p in location.products) # Total quantity of products for each grid.
-                capacity = f"Capacity:{location.capacity}\n" # Shows capacity in location.
-
                         
                 if total_qty == 0: # If total quantity is "0", the background colour is set to white indicating "free"/"empty" space.
                     bg_color = "white"
@@ -582,7 +649,7 @@ def display_warehouse(): # Define the displaying function for the warehouse.
     window.mainloop() # Loop which keeps the window running until a change/input happens.
     
     
-def menu(): # Define function to be a menu for users to view and manipulate the warehouse.
+def menu(warehouse): # Define function to be a menu for users to view and manipulate the warehouse.
     """
     Command Line Interface for the Inevntory Management System.
     
