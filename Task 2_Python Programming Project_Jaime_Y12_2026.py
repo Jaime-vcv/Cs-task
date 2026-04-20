@@ -659,16 +659,17 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
     - Search for products (Option 6)
     - Add/remove locations (Option 7-8)
     - Print warehouse layout (Options 9)
-    - Exit the syetem (Option 10)
+    - Run unit tests (Option 10)
+    - Exit the syetem (Option 11)
     
     Paramaters:
-        warehouse (Warehouse): The warehouse object to manage
+        warehouse (Warehouse): The warehouse object to manage.
     Returns:
         None
     
     Note:
-        Uses infinite loop until user selects exit (Option 10).
-        Input validation prevents crashes from invalid data types
+        Uses infinite loop until user selects exit (Option 11).
+        Input validation prevents crashes from invalid data types.
     """
     while True: # Keeps an infinite loop until a break or stop happens.
         print("\n --- Inventory Management System ---") # Display in a new line the name of the system: "Inventory Management System".
@@ -681,12 +682,13 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         print("7. Add Location!") # Display a message to the user indicating which number to input to add a location.
         print("8. Remove Location!") # Display a message to the user indicating which number to input to remove a location.
         print("9. Print Warehouse Layout!") # Display a message to the user indicating which number to input to print the Warehouse Layout.        
-        print("10. Exit!") # Display a message to the user indicating which number to input to exit the system.
+        print("10. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
+        print("11. Exit!") # Display a message to the user indicating which number to input to exit the system.
             
         choice = input("Please enter choice: ").strip() # Local varaiable "choice" used to determine what the user desires to do in the "IMS".
             
         if choice == "1": # User chooses to view the warehouse.
-            display_warehouse() # Call to the "GUI".
+            display_warehouse(warehouse) # Call to the "GUI".
         
         elif choice == "2": # User chooses to add a product.
             name = input("Enter product name: ") # User chooses to input the new product's name and SKU.
@@ -697,7 +699,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                 row = int(input("Enter row: "))
                 col = int(input("Enter column: "))
                 
-                if not warehouse.valid_position(row, col): # Call function to validate position for rows and columns
+                if not warehouse.valid_position(row, col): # Call function to validate position for rows and columns.
                     print("Invalid Row/Column Index!")
                     continue
                 
@@ -714,7 +716,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                     print("Product added to warehouse!") # Notify the user product has been added successfully.
                 else:
                     print("Product not added to warehouse...") # If prevoius check fails, notify the user on failure.
-            except WarehouseError:
+            except ValueError:
                 print("Invalid entry! \/ (Try again)") # If there's any errors notify the user of invalid entry and encourage to try again for user friendly experience.
                             
         elif choice == "3": # User chooses to input SKU to remove a product.
@@ -726,7 +728,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
             try: # Handles user input conversion and prevents errors caused by invalid input in new quantity.
                 new_qty = int(input("Enter new product quantity: ")) # User inputs new quantity.
                 warehouse.find_and_update_quantity(sku, new_qty) # Call function to find and update product quantity.
-            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                  print("!Invalid entry! 'Only numbers within the system are allowed'") # User gets notified that there has been an error with their number input.
         
         elif choice == "5": # User chooses to update a product's price using its SKU.
@@ -734,7 +736,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
             try: # Handles user input conversion and prevents errors caused by invalid input in new price.
                 price = float(input("New Price: ")) # User inputs new price.
                 warehouse.find_and_update_price(sku, price) # Call function to find and update product's price using the SKU.
-            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input!") # Notify the user of an invalid input.
                 
         elif choice == "6": # User chooses to find a product using its SKU.
@@ -750,7 +752,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                     warehouse.add_location(row, col, capacity) # Call function to assign location with capacity and validated coordinates.
                 else:
                     print("Invalid Row/Column index!") # Notify the user of invalid coordinates
-            except WarehouseError: # If "try" encounters an error in input except calls to continue and the user gets notified.
+            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input") # Notify the user of invalid input.
         
         elif choice == "8": # User chooses to remove a location.
@@ -769,15 +771,19 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                 print("Warehouse could not be started")
             else:
                 warehouse.print_warehouse() # Calls function to print warehouse layout.
+               
+        elif choice == "10": # User chooses to run unit tests
+            run_unit_tests()       
                     
-        elif choice == "10": # User chooses to exit the warehouse after viewing and/or manipulating it.
+        elif choice == "11": # User chooses to exit the warehouse after viewing and/or manipulating it.
             print("Closing warehouse!") # Notifies the user the warehouse is being closed.
             break # Stop the ungoing loop of "while true"
             
         else:
-            print("Invalid input!! Choose between 1 to 10!") # Notify the user their entry is invalid and must choose from 1 - 5, ensuring a user friendly experience.
+            print("Invalid input!! Choose between 1 to 11!") # Notify the user their entry is invalid and must choose from 1 - 5, ensuring a user friendly experience.
 
 
 # Call to run the menu program.
 if __name__ == "__main__":
-    menu()
+    warehouse = setup_warehouse
+    menu(warehouse)
