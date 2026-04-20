@@ -32,6 +32,7 @@ class Product:
         """Get product SKU."""
         return self._sku
     
+    # OOP: ENCAPSULATION - Private attributes accessed via property decorators.
     @property
     def price(self):
         """Get product price."""
@@ -156,7 +157,7 @@ class Location:
             if existing.sku == product.sku: # Checks if existing products are found in the system.
                 print(f"Error {product.sku} already exists in ({self._row}, {self._col})") # Notify the user the product already exists in a location.
                 return False # Returns to function
-            
+        # LOGIC: Calculate total quantity to check against capacity    
         current_items = sum(p.quantity for p in self._products) # Sums the quantity of products to compare to the capacity, storing the quantity in a local variable.
         
         if current_items + product.quantity <= self._capacity: # Checks whether there's enoguh space by summing the total amount and comparing it to the capacity.
@@ -370,7 +371,7 @@ class Warehouse:
                             return product # Return to product.
         print("Product not found!") # Nofity the user their desired product hasn't been found.
         return None # Return nothing to user, indicating failure in finding the product.
-    
+    # Parameters: Document expected inputs.
     def add_location(self, row, col, capacity): # Define function to add location with rows, columns and capacity.
         """
         Add new location to warehouse grid.
@@ -696,7 +697,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                 quantity = int(input("Enter quantity: "))
                 row = int(input("Enter row: "))
                 col = int(input("Enter column: "))
-                
+                # VALIDATION: Check bounds before accessing grid.
                 if not warehouse.valid_position(row, col): # Call function to validate position for rows and columns.
                     print("Invalid Row/Column Index!")
                     continue
@@ -731,6 +732,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         
         elif choice == "5": # User chooses to update a product's price using its SKU.
             sku = input("Enter SKU to update price: ") # User inputs product's SKU.
+            # EXECPTION HANDLING: Try-except catches non-integer
             try: # Handles user input conversion and prevents errors caused by invalid input in new price.
                 price = float(input("New Price: ")) # User inputs new price.
                 warehouse.find_and_update_price(sku, price) # Call function to find and update product's price using the SKU.
