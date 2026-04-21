@@ -1,9 +1,12 @@
 import tkinter as tk # It imports tkinter to create the GUI, and it is used as "tk" to facilitate usage.
 
+
+# Warehouse error handling
 class WarehouseError(Exception):
     """Custom execption for warehouse operations.
     Demonstrates INHERITANCE (inherits from Exception)."""
     pass
+
 
 # The product class to use for each type of product.
 class Product:
@@ -467,8 +470,49 @@ class Warehouse:
                 row_line += f"{cell:^{cell_width}}" # Rows and columns are added together with cells centered "^" and width "cell width".
                         
             print(row_line) # Display 2D Array as table.
+    
+    
+    def print_inventory_report(self): # Define function to iterate through warehouse and print a report based on the inventory.
+        """
+        Print detailed inventory report shwoing all products across warehouse.
         
+        Returns:
+            None
+        """
+        print("\n" + "=" * 60) # Add lines for better design.
+        print("INVENTORY REPORT".center(60)) # Inventory title.
+        print("=" * 60)
+        
+        total_products = 0 # Local variable used to represent total amount of products in warehouse.
+        total_value = 0.0 # Local variable used to represent total value of products in warehouse.
+        found_any = False # Local variable with a "False" boolean to represent a not found product in warehouse.
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn.
+            for c in range(self._cols):
+                location = self._locations[r][c] # Set location to be row and column coordinates.
+                if location and location.products: # Check if a location has a product.
+                    found_any = True # Set found to be "True" therefore passing product as found in warehouse.
+                    print(f"-" * 40) # Add a line for better design.
+                    for product in location.products: # Iterate through every product for a location with products.
+                        total_products += 1 # Add one per product found.
+                        value = product.price * product.quantity # Set value to be the product's price times the product's quantity
+                        total_value += value # Set the total value of the warehouse to be the value from the product's price and quantity 
+                        
+                        print(f" Name: {product.name}") # Print each product's name, SKU, price (limited to 2 decimal places), quantity and value(limited to 2 decimal places)
+                        print(f" SKU:  {product.sku}")
+                        print(f" Price: ${product.price:.2f}")
+                        print(f" Quantity: {product.quantity}")
+                        print(f" Value: {value:.2f}")
+        if not found_any: # If any product has not been found after iterating through the warehouse.
+            print("No products were found in the Warehouse.") # Notify the user of the absence of products in the warehouse.
+        else:
+            print("=" * 60) # Add lines for better design.
+            print(f"Total product types: {total_products}") # Print total product types:
+            print(f"Total Inventory value ${total_value:.2f}") # Print total inventory value of the warehouse (limited to 2 decimal places).
+            print("=" * 60)
+                
 
+# Populate Warehouse with data
 def setup_warehouse():
     warehouse = Warehouse(5, 5)
 
@@ -526,6 +570,7 @@ def setup_warehouse():
     return warehouse
 
 
+# Test warehouse capabilities
 def run_unit_tests():
     """
     Unit testing for core functionality.
@@ -608,6 +653,7 @@ def run_unit_tests():
         print("=== SOME TESTS FAILED ===")
     
     return all_passed
+
 
 # Create Tkinter GUI ("Graphical User Interface") so the user has access to the 2D Array.
 def display_warehouse(warehouse): # Define the displaying function for the warehouse.
@@ -697,9 +743,10 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         print("6. Search Product!") # Display a message to the user indicating which number to input to search for a product.        
         print("7. Add Location!") # Display a message to the user indicating which number to input to add a location.
         print("8. Remove Location!") # Display a message to the user indicating which number to input to remove a location.
-        print("9. Print Warehouse Layout!") # Display a message to the user indicating which number to input to print the Warehouse Layout.        
-        print("10. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
-        print("11. Exit!") # Display a message to the user indicating which number to input to exit the system.
+        print("9. Print Inventory Report!")
+        print("10. Print Warehouse Layout!") # Display a message to the user indicating which number to input to print the Warehouse Layout.        
+        print("11. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
+        print("12. Exit!") # Display a message to the user indicating which number to input to exit the system.
             
         choice = input("Please enter choice: ").strip() # Local variable "choice" used to determine what the user desires to do in the "IMS".
             
@@ -783,21 +830,24 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
             except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input")
         
-        elif choice == "9": # User chooses to print the warehouse
+        elif choice == "9": # User chooses to print inventory report.
+            warehouse.print_inventory_report() # Calls the function to print the iventory report through warehouse.
+        
+        elif choice == "10": # User chooses to print the warehouse
             if warehouse is None:
                 print("Warehouse could not be started")
             else:
                 warehouse.print_warehouse() # Calls function to print warehouse layout.
                
-        elif choice == "10": # User chooses to run unit tests
+        elif choice == "11": # User chooses to run unit tests
             run_unit_tests()       
                     
-        elif choice == "11": # User chooses to exit the warehouse after viewing and/or manipulating it.
+        elif choice == "12": # User chooses to exit the warehouse after viewing and/or manipulating it.
             print("Closing warehouse!") # Notifies the user the warehouse is being closed.
             break # Stop the ongoing loop of "while true"
             
         else:
-            print("Invalid input!! Choose between 1 to 11!") # Notify the user their entry is invalid and must choose from 1 - 5, ensuring a user friendly experience.
+            print("Invalid input!! Choose between 1 to 12!") # Notify the user their entry is invalid and must choose from 1 - 12, ensuring a user friendly experience.
 
 
 # Call to run the menu program.
