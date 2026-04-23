@@ -1,9 +1,12 @@
 import tkinter as tk # It imports tkinter to create the GUI, and it is used as "tk" to facilitate usage.
 
+
+# Warehouse error handling
 class WarehouseError(Exception):
-    """Custom execption for warehouse operations.
+    """Custom exception for warehouse operations.
     Demonstrates INHERITANCE (inherits from Exception)."""
     pass
+
 
 # The product class to use for each type of product.
 class Product:
@@ -382,6 +385,71 @@ class Warehouse:
         print("Product not found!") # Nofity the user their desired product hasn't been found.
         return None # Return nothing to user, indicating failure in finding the product.
     # Parameters: Document expected inputs.
+    
+    def find_products_by_name(self, name): # Define function to find product by its name.
+        """
+        Search for products by name across all locations.
+        
+        Parameters:
+            name (str): Product name to search for (partial match allowed).
+            
+        Returns:
+            list: List of tuples (row, col, product) for matches.
+        """
+        results = [] # Store seacrh results in a list.
+        search_name = name.lower() # Local variable "search name" used to refer to name for searching.
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c]
+                if location: # Check to pass location.
+                    for product in location.products: # Iterate through every product in each location.
+                        if search_name in product.name.lower(): # Match the searched name with the name in warehouse.
+                            results.append((r, c, product)) # Add results including the coordinates.
+        
+        return results
+    
+    def find_product_flexible(self, identifier): # Define function to find product with either name or SKU.
+        """
+        Find product by SKU or name.
+        Tries SKU first, then falls back to name search.
+        
+        Parameters:
+            identifier (str): SKU or product name to search.
+            
+        Returns:
+            tuple: (product, row, col) if found, (None, None, None) if not found.
+            list: If multiple name matches found, returns list of options.
+        """
+        # Try exact SKU match first
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn to access all products.
+            for c in range(self._cols):
+                location = self._locations[r][c]
+                if location: # Check to pass location.
+                    for product in location.products: # Iterate through every product in each location.
+                        if product.sku == identifier: # Check for matching SKUs in products
+                            return (product, r, c, "sku") # Give back results including coordinates and "sku".
+        
+        # Fallback: search by name
+        name_results = self.find_products_by_name(identifier) # Call a search by name only.
+        
+        if len(name_results) == 0: # Check if there's a name.
+            print(f"No product found with SKU or name '{identifier}'") # Notify the user no product has been found.
+            return (None, None, None, None) # Give out none values. Therefore, NOTHING!!!!
+        
+        elif len(name_results) == 1: # If there's name
+            # Single match found by name
+            r, c, product = name_results[0] # Use values from warehouse and print result.
+            print(f"Found '{product.name}' (SKU: {product.sku}) at ({r}, {c})") # Notify the user their product has been found sucessfully.
+            return (product, r, c, "name") # Give out the product with coordinates and name.
+        
+        else:
+            # Multiple matches — return list for user selection
+            print(f"\nMultiple products found matching '{identifier}':") # Notify the user when more than one product matches the search.
+            for i, (r, c, product) in enumerate(name_results, 1): # Iterate through results.
+                print(f"  {i}. {product.name} (SKU: {product.sku}) at ({r}, {c})") # Print search results.
+            return (name_results, None, None, "multiple") # Give out the products.
+    
     def add_location(self, row, col, capacity): # Define function to add location with rows, columns and capacity.
         """
         Add new location to warehouse grid.
@@ -407,16 +475,19 @@ class Warehouse:
         print(f"Location ({row}, {col}) created with capacity {capacity}") #Notify the user of the success and with coordinates and capacity.
         return True # Return success.
     
-    def remove_location(self, row, col): # Define function to remove location using coordinates.
+    def remove_location(self, row, col, force = False): # Define function to remove location using coordinates.
         """
-        Remove location from warehouse if empty.
+        Remove location from warehouse.
+        IF products exist and force=False, signals confirmation needed.
         
         Parameters:
             row (str): Row coordinate.
             col (str): Column coordinate.
+            force (bool): If True, remove even if products exists.
             
         Return:
-            bool: True if removed, False if invalid or not empty.
+            bool: True if removed, False if invalid.
+            str: "has_products" if confirmation needed.
         """
         
         if not self.valid_position(row, col): # Check if coordinates are not valid.
@@ -429,9 +500,8 @@ class Warehouse:
             print("Location does not exist!") # Notify the user location does not exist.
             return False # Return failure.
                
-        if location.products: # Check if location contains products.
-            print("Cannot remove location, location not empty!") # Notify the user the location contains products, therefore it cannot be removed.
-            return False # Return failure.
+        if location.products and not force: # Check if location contains products.
+            return "has_products"
         
         self._locations[row][col] = None # Set given location to "None" therefore removing it from the warehouse.
         print(f"Location ({row}, {col}) removed") # Notify the user the location (given its coordinates) has been deleted.
@@ -467,8 +537,49 @@ class Warehouse:
                 row_line += f"{cell:^{cell_width}}" # Rows and columns are added together with cells centered "^" and width "cell width".
                         
             print(row_line) # Display 2D Array as table.
+    
+    
+    def print_inventory_report(self): # Define function to iterate through warehouse and print a report based on the inventory.
+        """
+        Print detailed inventory report shwoing all products across warehouse.
         
+        Returns:
+            None
+        """
+        print("\n" + "=" * 60) # Add lines for better design.
+        print("INVENTORY REPORT".center(60)) # Inventory title.
+        print("=" * 60)
+        
+        total_products = 0 # Local variable used to represent total amount of products in warehouse.
+        total_value = 0.0 # Local variable used to represent total value of products in warehouse.
+        found_any = False # Local variable with a "False" boolean to represent a not found product in warehouse.
+        
+        for r in range(self._rows): # Iterate through every "r"ow and "c"olumn.
+            for c in range(self._cols):
+                location = self._locations[r][c] # Set location to be row and column coordinates.
+                if location and location.products: # Check if a location has a product.
+                    found_any = True # Set found to be "True" therefore passing product as found in warehouse.
+                    print(f"-" * 40) # Add a line for better design.
+                    for product in location.products: # Iterate through every product for a location with products.
+                        total_products += 1 # Add one per product found.
+                        value = product.price * product.quantity # Set value to be the product's price times the product's quantity
+                        total_value += value # Set the total value of the warehouse to be the value from the product's price and quantity 
+                        
+                        print(f" Name: {product.name}") # Print each product's name, SKU, price (limited to 2 decimal places), quantity and value(limited to 2 decimal places)
+                        print(f" SKU:  {product.sku}")
+                        print(f" Price: ${product.price:.2f}")
+                        print(f" Quantity: {product.quantity}")
+                        print(f" Value: {value:.2f}")
+        if not found_any: # If any product has not been found after iterating through the warehouse.
+            print("No products were found in the Warehouse.") # Notify the user of the absence of products in the warehouse.
+        else:
+            print("=" * 60) # Add lines for better design.
+            print(f"Total product types: {total_products}") # Print total product types:
+            print(f"Total Inventory value ${total_value:.2f}") # Print total inventory value of the warehouse (limited to 2 decimal places).
+            print("=" * 60)
+                
 
+# Populate Warehouse with data
 def setup_warehouse():
     warehouse = Warehouse(5, 5)
 
@@ -526,6 +637,7 @@ def setup_warehouse():
     return warehouse
 
 
+# Test warehouse capabilities
 def run_unit_tests():
     """
     Unit testing for core functionality.
@@ -609,6 +721,7 @@ def run_unit_tests():
     
     return all_passed
 
+
 # Create Tkinter GUI ("Graphical User Interface") so the user has access to the 2D Array.
 def display_warehouse(warehouse): # Define the displaying function for the warehouse.
     """
@@ -664,19 +777,28 @@ def display_warehouse(warehouse): # Define the displaying function for the wareh
         
     window.mainloop() # Loop which keeps the window running until a change/input happens.
     
+def get_product_identifier():
+    """
+    Prompt user for product identifier and validate input.
+    
+    Returns:
+        str: SKU or name entered by user.
+    """
+    return input("Enter SKU or product name: ").strip()
     
 def menu(warehouse): # Define function to be a menu for users to view and manipulate the warehouse.
     """
-    Command Line Interface for the Inevntory Management System.
+    Command Line Interface for the Inventory Management System.
     
     Provides a text_based menu allowing users to:
     - View warehouse GUI (Option 1)
     - Add/remove/update products (Options 2-5)
     - Search for products (Option 6)
     - Add/remove locations (Option 7-8)
-    - Print warehouse layout (Options 9)
-    - Run unit tests (Option 10)
-    - Exit the syetem (Option 11)
+    - Print inventory report (Option 9)
+    - Print warehouse layout (Options 10)
+    - Run unit tests (Option 11)
+    - Exit the system (Option 12)
     
     Parameters:
         warehouse (Warehouse): The warehouse object to manage.
@@ -684,7 +806,7 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         None
     
     Note:
-        Uses infinite loop until user selects exit (Option 11).
+        Uses infinite loop until user selects exit (Option 12).
         Input validation prevents crashes from invalid data types.
     """
     while True: # Keeps an infinite loop until a break or stop happens.
@@ -697,9 +819,10 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
         print("6. Search Product!") # Display a message to the user indicating which number to input to search for a product.        
         print("7. Add Location!") # Display a message to the user indicating which number to input to add a location.
         print("8. Remove Location!") # Display a message to the user indicating which number to input to remove a location.
-        print("9. Print Warehouse Layout!") # Display a message to the user indicating which number to input to print the Warehouse Layout.        
-        print("10. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
-        print("11. Exit!") # Display a message to the user indicating which number to input to exit the system.
+        print("9. Print Inventory Report!") # Display a message to the user indicating which number to input to remove a location (Even if it contains products)
+        print("10. Print Warehouse Layout!") # Display a message to the user indicating which number to input to print the Warehouse Layout.        
+        print("11. Run Unit Tests!") # Display a message to the user indicating which number to input to run unit tests. 
+        print("12. Exit!") # Display a message to the user indicating which number to input to exit the system.
             
         choice = input("Please enter choice: ").strip() # Local variable "choice" used to determine what the user desires to do in the "IMS".
             
@@ -735,31 +858,115 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
             except ValueError:
                 print("Invalid entry! \/ (Try again)") # If there's any errors notify the user of invalid entry and encourage to try again for user friendly experience.
                             
-        elif choice == "3": # User chooses to input SKU to remove a product.
-            sku = input("Enter SKU to remove product: ") # User inputs SKU to identify the product.
-            warehouse.find_and_remove_product(sku) # Call in the function to find and remove the product using the SKU.
-                
-        elif choice == "4": # User chooses to update a product using its SKU.
-            sku = input("Enter SKU to update product quantity: ") # User inputs product's SKU.
-            try: # Handles user input conversion and prevents errors caused by invalid input in new quantity.
-                new_qty = int(input("Enter new product quantity: ")) # User inputs new quantity.
-                warehouse.find_and_update_quantity(sku, new_qty) # Call function to find and update product quantity.
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
-                 print("!Invalid entry! 'Only numbers within the system are allowed'") # User gets notified that there has been an error with their number input.
-        
-        elif choice == "5": # User chooses to update a product's price using its SKU.
-            sku = input("Enter SKU to update price: ") # User inputs product's SKU.
-            # EXCEPTION HANDLING: Try-except catches non-integer
-            try: # Handles user input conversion and prevents errors caused by invalid input in new price.
-                price = float(input("New Price: ")) # User inputs new price.
-                warehouse.find_and_update_price(sku, price) # Call function to find and update product's price using the SKU.
-            except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
-                print("Invalid input!") # Notify the user of an invalid input.
-                
-        elif choice == "6": # User chooses to find a product using its SKU.
-            sku = input("Enter SKU to find a product: ") # User inputs desired product's SKU.
-            warehouse.find_product(sku) # Call function to find product using its SKU.
+        elif choice == "3": # User chooses to remove a product using its SKU or name.
+            identifier = get_product_identifier() # Use the identifier variable for a match.
+            result = warehouse.find_product_flexible(identifier) # Call in the function to use both SKU and Name for removal.
             
+            if result[3] == "multiple": # Check if more than 1 product appears as a "match".
+                options = result[0]
+                try:
+                    selection = int(input("Enter number of product to remove (0 to cancel): ")) # Give the user the option to remove a product out of multiple products.
+                    if 1 <= selection <= len(options): # Print product's values based on user choice.
+                        r, c, product = options[selection - 1]
+                        warehouse.locations[r][c].remove_product(product.sku) # Remove selected product.
+                    elif selection == 0:
+                        print("Removal cancelled.") # Notify the user of the cancellation of the process.
+                except ValueError:
+                    print("Invalid selection.") # Call "ValueError" to handle errors.
+            elif result[0] is not None: # When there's a product matching search and not multiple.
+                product, r, c, _ = result
+                warehouse.locations[r][c].remove_product(product.sku) # Iterate through warehouse and call in to delete the matched product.
+            else:
+                print("Product not found.") # Notify the user product has not been found in the warehouse.
+                
+        elif choice == "4": # User chooses to update a products quantity using its SKU or Name.
+            identifier = get_product_identifier() # Use the identifier variable for a match.
+            result = warehouse.find_product_flexible(identifier) # Call in the function to use both SKU and Name for updating.
+            
+            if result[3] == "multiple": # Check if more than 1 product appears as a "match".
+                options = result[0]
+                try:
+                    selection = int(input("Enter number of product to update (0 to cancel): ")) # The user is given the option to update a product out of the multiple options
+                    if 1 <= selection <= len(options): # Print product's values based on user choice.
+                        r, c, product = options[selection - 1]
+                        try:
+                            new_qty = int(input("Enter new product quantity: ")) # Print new product's quantity.
+                            warehouse.locations[r][c].update_quantity(product.sku, new_qty)
+                        except ValueError:
+                            print("Invalid quantity.")
+                    elif selection == 0:
+                        print("Update cancelled.")
+                except ValueError:
+                    print("Invalid selection.")
+            elif result[0] is not None:
+                product, r, c, _ = result
+                try:
+                    new_qty = int(input("Enter new product quantity: "))
+                    warehouse.locations[r][c].update_quantity(product.sku, new_qty)
+                except ValueError:
+                    print("Invalid quantity.")
+            else:
+                print("Product not found.")
+                       
+        elif choice == "5":
+            identifier = get_product_identifier()
+            result = warehouse.find_product_flexible(identifier)
+            
+            if result[3] == "multiple":
+                options = result[0]
+                try:
+                    selection = int(input("Enter number of product to update (0 to cancel): "))
+                    if 1 <= selection <= len(options):
+                        r, c, product = options[selection - 1]
+                        try:
+                            new_price = float(input("New Price: "))
+                            warehouse.locations[r][c].update_price(product.sku, new_price)
+                        except ValueError:
+                            print("Invalid price.")
+                    elif selection == 0:
+                        print("Update cancelled.")
+                except ValueError:
+                    print("Invalid selection.")
+            elif result[0] is not None:
+                product, r, c, _ = result
+                try:
+                    new_price = float(input("New Price: "))
+                    warehouse.locations[r][c].update_price(product.sku, new_price)
+                except ValueError:
+                    print("Invalid price.")
+            else:
+                print("Product not found.")
+                
+        elif choice == "6": # User chooses to find a product in the warehouse using its SKU or Name.
+            identifier = input("Enter SKU or product name to search: ").strip() # Use the identifier variable to match any search. (leave no space in input ensuring no induced error).
+            result = warehouse.find_product_flexible(identifier) # Call in the function search for both options (SKU or Name).
+            
+            if result[3] == "multiple": # Check if more than 1 product appears as a "match".
+                # User must select from multiple matches
+                options = result[0]
+                try:
+                    selection = int(input("Enter number of product to select (0 to cancel): ")) # Give the user the choice to choose from multiple products for their desired selection.
+                    if 1 <= selection <= len(options): # Print product's values based on user choice.
+                        r, c, product = options[selection - 1]
+                        print(f"\nSelected: {product.name}")
+                        print(f"  SKU:      {product.sku}")
+                        print(f"  Price:    ${product.price:.2f}")
+                        print(f"  Quantity: {product.quantity}")
+                        print(f"  Location: ({r}, {c})")
+                    elif selection == 0: # Cancel search is user decided to stop.
+                        print("Search cancelled.") # User gets notified of the cancellation of the process.
+                except ValueError: # Use "ValueError" for erroe handling
+                    print("Invalid selection.") # Notify the user of an invalid selection.
+            
+            elif result[0] is not None: # When there's a product matching search and not multiple.
+                product, r, c, match_type = result
+                print(f"\n{'SKU' if match_type == 'sku' else 'Name'} match found:") # Print all product details.
+                print(f"  Name:     {product.name}")
+                print(f"  SKU:      {product.sku}")
+                print(f"  Price:    ${product.price:.2f}")
+                print(f"  Quantity: {product.quantity}")
+                print(f"  Location: ({r}, {c})")
+                            
         elif choice == "7": # User chooses to find add a location.
             try: # Handles user input conversion and prevents errors caused by invalid input in new location.
                 row = int(input("Enter row: ")) # User inputs rows, columns and capacity.
@@ -777,27 +984,36 @@ def menu(warehouse): # Define function to be a menu for users to view and manipu
                 row = int(input("Enter row: ")) # User inputs rows and columns
                 col = int(input("Enter col: "))
                 if warehouse.valid_position(row, col): # Call function to validate position for rows and columns.
-                    warehouse.remove_location(row, col) # Call function to remove location using validated coordinates.
+                   result = warehouse.remove_location(row, col) # Call function to remove location using validated coordinates.
+                   if result == "has_products":
+                        confirm = input("There are products in this location. Do you still want to remove it (YES/NO) ").strip().upper()
+                        if confirm == "YES":
+                            warehouse.remove_location(row, col, force =True)
+                        else:
+                            print("Removal cancelled.")
                 else:
                     print("Invalid Row/Column index!") # Notify the user of invalid coordinates
             except ValueError: # If "try" encounters an error in input except calls to continue and the user gets notified.
                 print("Invalid input")
         
-        elif choice == "9": # User chooses to print the warehouse
+        elif choice == "9": # User chooses to print inventory report.
+            warehouse.print_inventory_report() # Calls the function to print the iventory report through warehouse.
+        
+        elif choice == "10": # User chooses to print the warehouse
             if warehouse is None:
                 print("Warehouse could not be started")
             else:
                 warehouse.print_warehouse() # Calls function to print warehouse layout.
                
-        elif choice == "10": # User chooses to run unit tests
+        elif choice == "11": # User chooses to run unit tests
             run_unit_tests()       
                     
-        elif choice == "11": # User chooses to exit the warehouse after viewing and/or manipulating it.
+        elif choice == "12": # User chooses to exit the warehouse after viewing and/or manipulating it.
             print("Closing warehouse!") # Notifies the user the warehouse is being closed.
             break # Stop the ongoing loop of "while true"
             
         else:
-            print("Invalid input!! Choose between 1 to 11!") # Notify the user their entry is invalid and must choose from 1 - 5, ensuring a user friendly experience.
+            print("Invalid input!! Choose between 1 to 12!") # Notify the user their entry is invalid and must choose from 1 - 12, ensuring a user friendly experience.
 
 
 # Call to run the menu program.
